@@ -17,7 +17,7 @@ frappe.ui.form.on("Subscription", {
     setup: function (frm) {
         frm.set_query("user_account_representative", function (doc) {
 			return {
-				query: "erpnext.selling.doctype.customer.customer.get_customer_primary_contact",
+				query: "erpusa.stripe_plus.doctype.stripe_plus_settings.stripe_plus_settings.get_customer_contacts_query",
 				filters: {
 					customer: doc.party,
 				},
