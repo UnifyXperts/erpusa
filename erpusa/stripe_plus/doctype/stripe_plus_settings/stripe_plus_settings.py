@@ -9,7 +9,27 @@ from frappe.model.document import Document
 import stripe
 from jinja2 import Template
 import re
-from erpnext.selling.doctype.customer.customer import get_customer_primary_contact
+# from erpnext.selling.doctype.customer.customer import get_customer_primary_contact
+
+@frappe.whitelist()
+def get_customer_contacts_query(doctype, txt, searchfield, start, page_len, filters):
+    customer = filters.get("customer")
+    conditions = [
+        ["Dynamic Link", "link_doctype", "=", "Customer"],
+        ["Dynamic Link", "link_name", "=", customer],
+    ]
+    for flag in ("is_billing_contact", "is_primary_contact"):
+        if filters.get(flag):
+            conditions.append([flag, "=", 1])
+
+    return frappe.get_all(
+        "Contact",
+        filters=conditions,
+        fields=["name"],
+        as_list=True,
+        limit_start=start,
+        limit_page_length=page_len,
+    )
 
 METHODS_FULLNAME = {
   "acss_debit": "Pre-authorized Debit Payments",
@@ -182,7 +202,7 @@ def update_stripe_customer_info(contact, method=None):
 @frappe.whitelist()
 def get_customer_contact(customer):
   for contact_type in ("is_billing_contact", "is_primary_contact"):
-    contact_list = get_customer_primary_contact(
+    contact_list = get_customer_contacts_query(
       "Customer", "", "name", 0, 11, {"customer": customer, contact_type: 1}
     )
     
@@ -208,7 +228,7 @@ def get_representative_email_address(representative, as_dict=True, log_title=Non
 @frappe.whitelist()
 def get_customer_contact(customer):
   for contact_type in ("is_billing_contact", "is_primary_contact"):
-    contact_list = get_customer_primary_contact(
+    contact_list = get_customer_contacts_query(
       "Customer", "", "name", 0, 11, {"customer": customer, contact_type: 1}
     )
     
